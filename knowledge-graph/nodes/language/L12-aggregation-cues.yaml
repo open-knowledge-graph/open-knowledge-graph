@@ -1,0 +1,57 @@
+id: L12-aggregation-cues
+type: knowledge
+domain: language
+name: "Aggregation cues — words that signal how to combine quantities"
+description: >
+  Surface phrases that signal aggregation type (remaining, total, final,
+  difference). Used by the parser and AST builder to determine what
+  operation to apply to accumulated quantities.
+
+provenance:
+  attribution:
+    source: "GSM8K aggregation pattern analysis"
+    date: "2026-04-01"
+  evidence:
+    type: empirical
+    description: "Aggregation triggers from word problem corpus"
+
+aggregation_types:
+  remaining:
+    words:
+      - left
+      - remain
+      - remaining
+      - still
+      - rest
+      - leftover
+      - "left over"
+
+  total:
+    words:
+      - total
+      - altogether
+      - combined
+      - "all together"
+      - "in all"
+      - together
+      - both
+
+  final:
+    words:
+      - final
+      - end
+      - now
+      - current
+      - currently
+
+  difference:
+    words:
+      - difference
+      - "more than"
+      - "less than"
+      - "fewer than"
+      - "how much more"
+      - "how much less"
+      - "how much fewer"
+      - faster
+      - slower

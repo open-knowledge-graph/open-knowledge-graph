@@ -106,6 +106,39 @@ def compile_all():
         for verb in op_data.get("verbs", []):
             compiled["verb_index"][verb] = op_id
 
+    # L10: Question phrases
+    data = load_yaml("L10-question-phrases.yaml")
+    compiled["question_triggers"] = [
+        {"phrase": q["phrase"],
+         "question_type": q["question_type"],
+         "default_unit": q.get("default_unit")}
+        for q in data["question_triggers"]
+    ]
+
+    # L11: Semantic fields
+    data = load_yaml("L11-semantic-fields.yaml")
+    compiled["semantic_fields"] = {}
+    for field_name, field_data in data["fields"].items():
+        entry = {"words": field_data["words"]}
+        if "values" in field_data:
+            entry["values"] = field_data["values"]
+        compiled["semantic_fields"][field_name] = entry
+
+    # L12: Aggregation cues
+    data = load_yaml("L12-aggregation-cues.yaml")
+    compiled["aggregation_cues"] = {}
+    for agg_type, agg_data in data["aggregation_types"].items():
+        compiled["aggregation_cues"][agg_type] = agg_data["words"]
+
+    # L13: Comparatives
+    data = load_yaml("L13-comparatives.yaml")
+    compiled["comparatives"] = {}
+    for direction, dir_data in data["comparatives"].items():
+        compiled["comparatives"][direction] = {
+            "words": dir_data["words"],
+            "operation": dir_data["operation"],
+        }
+
     # Write
     OUTPUT_DIR.mkdir(exist_ok=True)
     output_path = OUTPUT_DIR / "language.json"
@@ -124,6 +157,10 @@ def compile_all():
     print(f"  Stop words:    {len(compiled['stop_words'])}")
     print(f"  Synset maps:   {len(compiled['synset_operations'])}")
     print(f"  Verb index:    {len(compiled['verb_index'])}")
+    print(f"  Question trig: {len(compiled['question_triggers'])}")
+    print(f"  Semantic flds: {len(compiled['semantic_fields'])}")
+    print(f"  Aggregation:   {len(compiled['aggregation_cues'])}")
+    print(f"  Comparatives:  {len(compiled['comparatives'])}")
 
 
 if __name__ == "__main__":

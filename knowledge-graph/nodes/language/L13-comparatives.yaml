@@ -1,0 +1,52 @@
+id: L13-comparatives
+type: knowledge
+domain: language
+name: "Comparative adjectives — direction-bearing modifiers"
+description: >
+  Comparative adjectives and adverbs that imply arithmetic direction.
+  "more/older/taller" → addition direction. "less/younger/shorter" →
+  subtraction direction. Used by the resolver to determine operation
+  polarity in comparative constructions.
+
+provenance:
+  attribution:
+    source: "GSM8K comparative pattern analysis"
+    date: "2026-04-01"
+  evidence:
+    type: empirical
+    description: "Comparative-to-operation mappings from word problems"
+
+comparatives:
+  increase:
+    words:
+      - more
+      - older
+      - taller
+      - heavier
+      - larger
+      - bigger
+      - longer
+      - higher
+      - greater
+      - farther
+      - additional
+      - extra
+      - markup
+      - tax
+    operation: add
+
+  decrease:
+    words:
+      - less
+      - younger
+      - shorter
+      - lighter
+      - smaller
+      - fewer
+      - lower
+      - closer
+      - cheaper
+      - discount
+      - off
+      - save
+    operation: subtract

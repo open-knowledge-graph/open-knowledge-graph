@@ -1,0 +1,80 @@
+id: L11-semantic-fields
+type: knowledge
+domain: language
+name: "Semantic fields — word clusters by domain"
+description: >
+  Groups of words that share a semantic domain (money, time, currency).
+  Used by the parser to detect question types and resolve implicit units.
+
+provenance:
+  attribution:
+    source: "GSM8K domain word analysis"
+    date: "2026-04-01"
+  evidence:
+    type: empirical
+    description: "Semantic clusters from word problem corpus"
+
+fields:
+  money:
+    words:
+      - dollar
+      - dollars
+      - money
+      - cost
+      - costs
+      - spend
+      - spent
+      - pay
+      - paid
+      - price
+      - earn
+      - earned
+      - profit
+      - income
+      - salary
+      - budget
+      - charge
+      - make
+      - makes
+      - made
+      - worth
+      - owe
+      - owes
+      - owed
+
+  time:
+    words:
+      - hour
+      - hours
+      - minute
+      - minutes
+      - second
+      - seconds
+      - day
+      - days
+      - week
+      - weeks
+      - month
+      - months
+      - year
+      - years
+
+  coins:
+    words:
+      - penny
+      - pennies
+      - nickel
+      - nickels
+      - dime
+      - dimes
+      - quarter
+      - quarters
+    values:
+      penny: 1
+      pennies: 1
+      nickel: 5
+      nickels: 5
+      dime: 10
+      dimes: 10
+      quarter: 25
+      quarters: 25

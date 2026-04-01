@@ -427,5 +427,203 @@
     "third": "divide",
     "quarter": "divide",
     "ratio": "divide"
+  },
+  "question_triggers": [
+    {
+      "phrase": "how much",
+      "question_type": "money",
+      "default_unit": "dollars"
+    },
+    {
+      "phrase": "how many",
+      "question_type": "count",
+      "default_unit": null
+    },
+    {
+      "phrase": "what is",
+      "question_type": "count",
+      "default_unit": null
+    },
+    {
+      "phrase": "what was",
+      "question_type": "count",
+      "default_unit": null
+    },
+    {
+      "phrase": "what will",
+      "question_type": "count",
+      "default_unit": null
+    },
+    {
+      "phrase": "how old",
+      "question_type": "count",
+      "default_unit": "years"
+    },
+    {
+      "phrase": "how far",
+      "question_type": "count",
+      "default_unit": "distance"
+    },
+    {
+      "phrase": "how long",
+      "question_type": "count",
+      "default_unit": "time"
+    },
+    {
+      "phrase": "find the",
+      "question_type": "count",
+      "default_unit": null
+    },
+    {
+      "phrase": "calculate",
+      "question_type": "count",
+      "default_unit": null
+    }
+  ],
+  "semantic_fields": {
+    "money": {
+      "words": [
+        "dollar",
+        "dollars",
+        "money",
+        "cost",
+        "costs",
+        "spend",
+        "spent",
+        "pay",
+        "paid",
+        "price",
+        "earn",
+        "earned",
+        "profit",
+        "income",
+        "salary",
+        "budget",
+        "charge",
+        "make",
+        "makes",
+        "made",
+        "worth",
+        "owe",
+        "owes",
+        "owed"
+      ]
+    },
+    "time": {
+      "words": [
+        "hour",
+        "hours",
+        "minute",
+        "minutes",
+        "second",
+        "seconds",
+        "day",
+        "days",
+        "week",
+        "weeks",
+        "month",
+        "months",
+        "year",
+        "years"
+      ]
+    },
+    "coins": {
+      "words": [
+        "penny",
+        "pennies",
+        "nickel",
+        "nickels",
+        "dime",
+        "dimes",
+        "quarter",
+        "quarters"
+      ],
+      "values": {
+        "penny": 1,
+        "pennies": 1,
+        "nickel": 5,
+        "nickels": 5,
+        "dime": 10,
+        "dimes": 10,
+        "quarter": 25,
+        "quarters": 25
+      }
+    }
+  },
+  "aggregation_cues": {
+    "remaining": [
+      "left",
+      "remain",
+      "remaining",
+      "still",
+      "rest",
+      "leftover",
+      "left over"
+    ],
+    "total": [
+      "total",
+      "altogether",
+      "combined",
+      "all together",
+      "in all",
+      "together",
+      "both"
+    ],
+    "final": [
+      "final",
+      "end",
+      "now",
+      "current",
+      "currently"
+    ],
+    "difference": [
+      "difference",
+      "more than",
+      "less than",
+      "fewer than",
+      "how much more",
+      "how much less",
+      "how much fewer",
+      "faster",
+      "slower"
+    ]
+  },
+  "comparatives": {
+    "increase": {
+      "words": [
+        "more",
+        "older",
+        "taller",
+        "heavier",
+        "larger",
+        "bigger",
+        "longer",
+        "higher",
+        "greater",
+        "farther",
+        "additional",
+        "extra",
+        "markup",
+        "tax"
+      ],
+      "operation": "add"
+    },
+    "decrease": {
+      "words": [
+        "less",
+        "younger",
+        "shorter",
+        "lighter",
+        "smaller",
+        "fewer",
+        "lower",
+        "closer",
+        "cheaper",
+        "discount",
+        false,
+        "save"
+      ],
+      "operation": "subtract"
+    }
   }
 }

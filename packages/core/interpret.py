@@ -226,6 +226,24 @@ def _verb_index():
 def _synset_to_op():
     return _lg().synset_to_op
 
+def _question_triggers():
+    return _lg().question_triggers
+
+def _semantic_field(name):
+    return set(_lg().semantic_fields.get(name, {}).get("words", []))
+
+def _semantic_field_values(name):
+    return _lg().semantic_fields.get(name, {}).get("values", {})
+
+def _aggregation_cues(agg_type):
+    return _lg().aggregation_cues.get(agg_type, [])
+
+def _all_aggregation_cues():
+    return _lg().aggregation_cues
+
+def _comparatives():
+    return _lg().comparatives
+
 # Unit conversions — math knowledge (packages/math/units.py)
 from packages.math.units import (
     UNIT_TO_DOLLARS, UNIT_TO_SECONDS, UNIT_TO_HOURS, UNIT_TO_MINUTES,
@@ -454,12 +472,10 @@ def _classify_sentence(sentence: str, tokens: list[Token],
     clause = Clause(text=sentence, tokens=tokens)
     sent_lower = sentence.lower()
 
-    # Is this a question?
+    # Is this a question? (triggers from language graph L10)
     if is_last and ("?" in sentence or
-                    any(q in sent_lower for q in
-                        ["how much", "how many", "what is", "what was",
-                         "what will", "how old", "how far", "how long",
-                         "find the", "calculate"])):
+                    any(qt.phrase in sent_lower
+                        for qt in _question_triggers())):
         clause.role = "question"
         # Still extract quantities from questions — some embed data
         clause.quantities = [t for t in tokens
@@ -590,14 +606,7 @@ def parse(text: str) -> tuple[list[Clause], CompileContext]:
 #   4. Apply conversion → multiply source by rate to get target
 # =====================================================================
 
-# Common nouns that signal specific units
-_MONEY_WORDS = {"dollar", "dollars", "money", "cost", "costs", "spend",
-                "spent", "pay", "paid", "price", "earn", "earned",
-                "profit", "income", "salary", "budget", "charge",
-                "make", "makes", "made", "worth", "owe", "owes", "owed"}
-_TIME_WORDS = {"hour", "hours", "minute", "minutes", "second", "seconds",
-               "day", "days", "week", "weeks", "month", "months",
-               "year", "years"}
+# Semantic fields loaded from language graph (L11)
 
 
 def _extract_target(question: Clause) -> dict:
@@ -613,39 +622,32 @@ def _extract_target(question: Clause) -> dict:
     words = set(re.findall(r'[a-z]+', q))
     target = {"unit": "", "question_type": "count", "aggregation": None}
 
-    # --- Determine aggregation ---
-    if any(w in q for w in ["left", "remain", "remaining", "still"]):
-        target["aggregation"] = "remaining"
-    elif any(w in q for w in ["total", "altogether", "combined", "all together",
-                               "in all"]):
-        target["aggregation"] = "total"
-    elif any(w in q for w in ["final", "end", "now", "current", "currently"]):
-        target["aggregation"] = "final"
-    elif any(w in q for w in ["difference", "more than", "less than",
-                               "fewer than"]):
-        target["question_type"] = "difference"
+    # --- Determine aggregation (from language graph L12) ---
+    agg_cues = _all_aggregation_cues()
+    for agg_type, cue_words in agg_cues.items():
+        if agg_type == "difference":
+            if any(w in q for w in cue_words):
+                target["question_type"] = "difference"
+                break
+        else:
+            if any(w in q for w in cue_words):
+                target["aggregation"] = agg_type
+                break
 
     # --- Determine target unit ---
     # "How much in dollars" / "How much money"
-    if words & _MONEY_WORDS or "how much" in q:
+    if words & _semantic_field("money") or "how much" in q:
         target["question_type"] = "money"
         target["unit"] = "dollars"
         return target
 
     # "How many X" → X is the first NOUN after "many"
     # Skip function words (modals, pronouns, verbs) to find the real unit
-    _SKIP_WORDS = {"can", "could", "will", "would", "shall", "should",
-                   "may", "might", "must", "does", "did", "do", "is", "are",
-                   "was", "were", "has", "have", "had",
-                   "he", "she", "it", "they", "we", "you", "i",
-                   "him", "her", "them", "us",
-                   "be", "been", "being", "get", "got", "need",
-                   "more", "still", "also", "then", "there"}
     m = re.search(r'how\s+many\s+([\w\s]+?)(?:\?|$)', q)
     if m:
         phrase_words = m.group(1).split()
         for w in phrase_words:
-            if w not in _SKIP_WORDS and len(w) > 1:
+            if w not in _stop_words() and len(w) > 1:
                 target["unit"] = w
                 break
         return target
@@ -657,13 +659,11 @@ def _extract_target(question: Clause) -> dict:
         target["unit"] = m.group(1)
         return target
 
-    # "How old/far/long" → specific unit
-    if "how old" in q:
-        target["unit"] = "years"
-    elif "how far" in q:
-        target["unit"] = "distance"
-    elif "how long" in q:
-        target["unit"] = "time"
+    # Question phrase → default unit (from language graph L10)
+    for qt in _question_triggers():
+        if qt.default_unit and qt.phrase in q:
+            target["unit"] = qt.default_unit
+            break
 
     return target
 
@@ -1043,7 +1043,7 @@ def _try_algebra(clauses: list[Clause],
         money = [t.value for t in clause.tokens if t.type == "money"]
 
         # Total/combined constraint
-        if re.search(r'\b(?:total|combined|altogether)\b', sent_l) and numbers:
+        if any(w in sent_l for w in _aggregation_cues("total")) and numbers:
             total_constraint = max(numbers)
             continue
 
@@ -1133,7 +1133,7 @@ def _try_algebra(clauses: list[Clause],
     q_lower = question.text.lower()
 
     # "together" / "total" / "combined" → sum all entities
-    if re.search(r'\b(?:together|total|combined|altogether|in all)\b', q_lower):
+    if any(w in q_lower for w in _aggregation_cues("total")):
         if len(known) >= 2:
             result = sum(known.values())
             ctx.debug.append(f"algebra-sum: {known}")
@@ -2305,11 +2305,10 @@ def _try_percentage(clauses: list[Clause], target: dict,
 
         # Check if question asks for total (both, together, all)
         q_lower = question.text.lower() if question else ""
-        asks_total = bool(re.search(
-            r'\b(?:both|total|altogether|together|all|combined|'
-            r'how much (?:does|do|did|will).*cost)\b', q_lower))
-        asks_remaining = bool(re.search(
-            r'\b(?:left|remain|still)\b', q_lower))
+        asks_total = any(w in q_lower for w in _aggregation_cues("total")) or \
+            bool(re.search(r'how much (?:does|do|did|will).*cost', q_lower))
+        asks_remaining = any(w in q_lower
+                             for w in _aggregation_cues("remaining"))
 
         if asks_total and pc["direction"] in ("more", "less"):
             # "Both cars cost?" → base + computed
@@ -2730,7 +2729,7 @@ def _try_reference_chain(clauses: list[Clause],
     question = next((c for c in clauses if c.role == "question"), None)
     q_text = question.text.lower() if question else ""
 
-    if any(w in q_text for w in ["total", "all", "altogether", "combined"]):
+    if any(w in q_text for w in _aggregation_cues("total")):
         # Sum all intermediate values
         ast = values[0]
         for v in values[1:]:

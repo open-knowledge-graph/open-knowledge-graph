@@ -43,6 +43,13 @@ class ReferenceRule:
 
 
 @dataclass
+class QuestionTrigger:
+    phrase: str
+    question_type: str
+    default_unit: Optional[str]
+
+
+@dataclass
 class LanguageGraph:
     """Compiled language graph — all lexical knowledge in one place."""
     notations: list[NotationRule]
@@ -56,6 +63,10 @@ class LanguageGraph:
     stop_words: set[str]
     synset_to_op: dict[str, str]
     verb_index: dict[str, str]
+    question_triggers: list[QuestionTrigger]
+    semantic_fields: dict[str, dict]        # field_name → {words, values?}
+    aggregation_cues: dict[str, list[str]]  # agg_type → [words]
+    comparatives: dict[str, dict]           # direction → {words, operation}
 
 
 def load() -> LanguageGraph:
@@ -95,6 +106,15 @@ def load() -> LanguageGraph:
 
     rate_words = {r["word"] for r in raw["rate_indicators"]}
 
+    question_triggers = [
+        QuestionTrigger(
+            phrase=q["phrase"],
+            question_type=q["question_type"],
+            default_unit=q.get("default_unit"),
+        )
+        for q in raw.get("question_triggers", [])
+    ]
+
     _GRAPH = LanguageGraph(
         notations=notations,
         number_words=raw["number_words"],
@@ -107,6 +127,10 @@ def load() -> LanguageGraph:
         stop_words=set(raw["stop_words"]),
         synset_to_op=raw["synset_operations"],
         verb_index=raw["verb_index"],
+        question_triggers=question_triggers,
+        semantic_fields=raw.get("semantic_fields", {}),
+        aggregation_cues=raw.get("aggregation_cues", {}),
+        comparatives=raw.get("comparatives", {}),
     )
     return _GRAPH
 

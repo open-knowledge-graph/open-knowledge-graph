@@ -1,0 +1,42 @@
+id: L10-question-phrases
+type: knowledge
+domain: language
+name: "Question phrases — triggers for question detection and default units"
+description: >
+  Phrases that signal a sentence is asking a question, with optional
+  default units for specific question types. Used by the parser to
+  classify sentence roles.
+
+provenance:
+  attribution:
+    source: "GSM8K question pattern analysis"
+    date: "2026-04-01"
+  evidence:
+    type: empirical
+    description: "Extracted from GSM8K question sentences"
+
+question_triggers:
+  - phrase: "how much"
+    question_type: money
+    default_unit: dollars
+  - phrase: "how many"
+    question_type: count
+  - phrase: "what is"
+    question_type: count
+  - phrase: "what was"
+    question_type: count
+  - phrase: "what will"
+    question_type: count
+  - phrase: "how old"
+    question_type: count
+    default_unit: years
+  - phrase: "how far"
+    question_type: count
+    default_unit: distance
+  - phrase: "how long"
+    question_type: count
+    default_unit: time
+  - phrase: "find the"
+    question_type: count
+  - phrase: "calculate"
+    question_type: count
