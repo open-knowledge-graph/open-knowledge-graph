@@ -39,6 +39,9 @@ operations:
       - add.v.01         # make an addition
       - increase.v.01    # make greater in size/amount
       - join.v.01        # become part of
+      - hire.v.01        # employ
+      - replace.v.01     # put back / substitute
+      - bring.v.01       # carry toward
     verbs:
       - add
       - adds
@@ -77,6 +80,17 @@ operations:
       - combined
       - sum
       - additional
+      - extra
+      - another
+      - hire
+      - hires
+      - hired
+      - replace
+      - replaces
+      - replaced
+      - bring
+      - brings
+      - brought
 
   subtract:
     name: Subtraction
@@ -100,6 +114,16 @@ operations:
       - cook.v.01        # consumes ingredients
       - bake.v.01        # consumes ingredients
       - create_from_raw_material.v.01  # consumes raw material
+      - sneak.v.01       # take secretly
+      - steal.v.01       # take without permission
+      - drop.v.01        # let fall / lose
+      - ruin.v.01        # destroy
+      - damage.v.01      # harm
+      - forget.v.01      # fail to retain
+      - waste.v.01       # use carelessly
+      - quit.v.01        # stop / leave
+      - place.v.01       # put somewhere (context: consume/use)
+      - sell.v.01        # exchange for money
     verbs:
       - subtract
       - minus
@@ -152,6 +176,35 @@ operations:
       - paint
       - paints
       - painted
+      - sell
+      - sells
+      - sold
+      - quit
+      - quits
+      - place
+      - placed
+      - places
+      - sneak
+      - sneaks
+      - snuck
+      - steal
+      - steals
+      - stole
+      - drop
+      - drops
+      - dropped
+      - ruin
+      - ruins
+      - ruined
+      - damage
+      - damages
+      - damaged
+      - forget
+      - forgets
+      - forgot
+      - waste
+      - wastes
+      - wasted
 
   multiply:
     name: Multiplication
@@ -200,3 +253,7 @@ operations:
       - third
       - quarter
       - ratio
+      - equally
+      - evenly
+      - between
+      - among

@@ -116,3 +116,53 @@ stop_words:
   - third
   - last
   - next
+
+  # Question words
+  - how
+  - what
+  - when
+  - where
+  - who
+  - why
+  - which
+
+  # Additional conjunctions/adverbs
+  - after
+  - before
+  - there
+  - into
+  - including
+  - because
+  - both
+
+  # Calendar (never entities)
+  - monday
+  - tuesday
+  - wednesday
+  - thursday
+  - friday
+  - saturday
+  - sunday
+  - january
+  - february
+  - march
+  - april
+  - may
+  - june
+  - july
+  - august
+  - september
+  - october
+  - november
+  - december
+  - today
+
+  # Scene nouns (common in word problems, never entities)
+  - tree
+  - school
+  - farm
+  - farmer
+  - truck
+  - store
+  - christmas
+  - santa

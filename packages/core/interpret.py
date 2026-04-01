@@ -244,6 +244,17 @@ def _all_aggregation_cues():
 def _comparatives():
     return _lg().comparatives
 
+def _has_verb_for_op(sentence: str, operation: str) -> bool:
+    """Check if sentence contains any verb mapped to the given operation."""
+    vi = _verb_index()
+    words = set(re.findall(r'[a-z]+', sentence.lower()))
+    return any(vi.get(w) == operation for w in words)
+
+def _verbs_for_op(operation: str) -> set[str]:
+    """Return all verbs mapped to a given operation."""
+    vi = _verb_index()
+    return {w for w, op in vi.items() if op == operation}
+
 # Unit conversions — math knowledge (packages/math/units.py)
 from packages.math.units import (
     UNIT_TO_DOLLARS, UNIT_TO_SECONDS, UNIT_TO_HOURS, UNIT_TO_MINUTES,
@@ -745,10 +756,8 @@ def _try_unit_conversion(clauses: list[Clause], target: dict,
 
     # Determine which conversion table to use based on units present
     # Only actual coins need conversion — "dollars" and "$" are already dollars
-    _COIN_UNITS = {"penny", "pennies", "nickel", "nickels",
-                   "dime", "dimes", "quarter", "quarters"}
     coin_tokens = [t for t in all_tokens
-                   if t.unit in _COIN_UNITS and t.type == "number"]
+                   if t.unit in _semantic_field("coins") and t.type == "number"]
     target_is_cents = target.get("unit", "") in ("cents", "cent")
     target_is_money = target.get("question_type") == "money" or target_is_cents
 
@@ -833,22 +842,7 @@ def _try_unit_conversion(clauses: list[Clause], target: dict,
 # =====================================================================
 
 # Stop words for entity extraction (not proper nouns)
-_ALGEBRA_STOP = {
-    "how", "what", "when", "where", "who", "why", "which",
-    "the", "and", "but", "for", "not", "are", "was", "were", "has", "had",
-    "she", "her", "his", "him", "they", "them", "its", "each", "every",
-    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
-    "sunday", "january", "february", "march", "april", "may", "june",
-    "july", "august", "september", "october", "november", "december",
-    "after", "before", "then", "also", "both", "all", "two", "three",
-    "four", "five", "six", "seven", "eight", "nine", "ten",
-    "including", "because", "small", "large", "new", "old",
-    "tree", "school", "farm", "farmer", "truck", "store",
-    "christmas", "santa",
-    "one", "two", "three", "first", "second", "third", "last",
-    "there", "that", "this", "than", "with", "from", "into",
-    "if", "on", "in", "at", "to", "by", "of", "or", "so",
-}
+# Entity extraction uses stop_words from language graph (L08)
 
 
 @dataclass
@@ -865,7 +859,7 @@ def _extract_entities(text: str) -> set[str]:
     entities = set()
     for m in re.finditer(r'\b([A-Z][a-z]{2,})\b', text):
         name = m.group(1).lower()
-        if name not in _ALGEBRA_STOP:
+        if name not in _stop_words():
             entities.add(name)
     return entities
 
@@ -1685,9 +1679,8 @@ def _get_implicit_numbers(text: str, existing: list) -> list:
     existing_vals = {v[0] for v in existing}
     implicit = []
 
-    # Coin values: if we have quarters/dimes/nickels as units
-    coin_vals = {"quarter": 25, "quarters": 25, "dime": 10, "dimes": 10,
-                 "nickel": 5, "nickels": 5, "penny": 1, "pennies": 1}
+    # Coin values from language graph (L11)
+    coin_vals = _semantic_field_values("coins")
     for coin, val in coin_vals.items():
         if coin in text and val not in existing_vals:
             implicit.append((val, "cents", "", -1, -1))
@@ -1942,66 +1935,44 @@ def _compute_accumulator(clauses: list[Clause], skip_idx: int,
             else:
                 continue
 
-        # --- Pattern: fraction + consume verb ---
-        if mults and any(re.search(rf'\b{w}\b', sent_lower) for w in
-                         ["quit", "leave", "left", "place", "placed",
-                          "remove", "removed", "eat", "ate", "eats",
-                          "use", "used", "uses", "gave", "give", "gives",
-                          "lost", "lose", "loses", "sold", "sell", "sells",
-                          "spent", "spend", "spends", "took", "take",
-                          "threw", "throw", "donated", "donate"]):
+        # --- Pattern: fraction + consume verb (from graph L09) ---
+        if mults and _has_verb_for_op(sent_lower, "subtract"):
             fraction = mults[0].value
             consumed = BinOp("multiply", accumulator, Lit(fraction))
             accumulator = BinOp("subtract", accumulator, consumed)
             continue
 
         # --- Pattern: fraction + "of the remaining/rest" ---
-        if mults and any(w in sent_lower for w in ["remaining", "rest"]):
+        if mults and any(w in sent_lower
+                         for w in _aggregation_cues("remaining")):
             fraction = mults[0].value
             consumed = BinOp("multiply", accumulator, Lit(fraction))
             accumulator = BinOp("subtract", accumulator, consumed)
             continue
 
         # --- Pattern: "sells remainder for $X" → multiply ---
-        if re.search(r'\b(?:sell|sold|earn|make|charge)\b', sent_lower):
-            if money:
+        if _has_verb_for_op(sent_lower, "subtract") and money:
+            # Sell verbs with money = revenue (multiply, not subtract)
+            if re.search(r'\b(?:sell|sold|earn|make|charge)\b', sent_lower):
                 accumulator = BinOp("multiply", accumulator,
                                     Lit(money[0].value,
                                         f"${money[0].value:g}"))
                 continue
 
-        # --- Pattern: subtract verbs with numbers ---
-        if nums and any(re.search(rf'\b{w}\b', sent_lower) for w in
-                        ["eat", "eats", "ate", "use", "used", "uses",
-                         "bake", "baked", "bakes", "cook", "cooked",
-                         "give", "gave", "gives", "lose", "lost", "loses",
-                         "spend", "spent", "spends", "take", "took",
-                         "remove", "removed", "throw", "threw",
-                         "donate", "donated", "discard", "discarded",
-                         "quit", "leave", "left", "break", "broke"]):
+        # --- Pattern: operation verbs with numbers (from graph L09) ---
+        if nums and _has_verb_for_op(sent_lower, "subtract"):
             for n in nums:
                 accumulator = BinOp("subtract", accumulator,
                                     Lit(n.value, n.text))
             continue
 
-        # --- Pattern: add verbs with numbers ---
-        if nums and any(re.search(rf'\b{w}\b', sent_lower) for w in
-                        ["add", "adds", "added", "hire", "hires", "hired",
-                         "buy", "buys", "bought", "find", "finds", "found",
-                         "get", "gets", "got", "receive", "received",
-                         "collect", "collected", "join", "joined",
-                         "more", "additional", "extra", "another",
-                         "replace", "replaced", "gain", "gained",
-                         "increase", "increased", "bring", "brought"]):
+        if nums and _has_verb_for_op(sent_lower, "add"):
             for n in nums:
                 accumulator = BinOp("add", accumulator,
                                     Lit(n.value, n.text))
             continue
 
-        # --- Pattern: multiply verbs with numbers ---
-        if nums and any(re.search(rf'\b{w}\b', sent_lower) for w in
-                        ["times", "multiply", "per", "each", "every",
-                         "rate"]):
+        if nums and _has_verb_for_op(sent_lower, "multiply"):
             for n in nums:
                 if n.value != initial_val:
                     accumulator = BinOp("multiply", accumulator,
@@ -2826,8 +2797,7 @@ def _try_rate_groups(clauses: list[Clause],
 
             # Check if number follows a division marker
             is_division_target = False
-            for div_word in ["equally", "evenly", "split", "share",
-                             "between", "among", "distribute"]:
+            for div_word in _verbs_for_op("divide"):
                 dw_pos = sent_lower.find(div_word)
                 if dw_pos >= 0 and n_pos > dw_pos:
                     is_division_target = True
@@ -2905,9 +2875,8 @@ def _try_sequential(clauses: list[Clause],
         first_op = first_clause.operation
         first_text = first_clause.text.lower()
         if first_op:
-            is_deferred = first_op == "divide" and any(
-                w in first_text for w in
-                ["between", "among", "equally", "evenly", "split", "share"])
+            is_deferred = first_op == "divide" and \
+                _has_verb_for_op(first_text, "divide")
             if is_deferred:
                 # Save for after all other operations
                 deferred_op = (first_op, first_clause_extra_nums)
@@ -2954,36 +2923,23 @@ def _try_sequential(clauses: list[Clause],
                     if t.type in ("number", "money", "fraction")]
             mults = [t for t in clause.tokens if t.type == "multiplier"]
 
-        # --- Pattern: fraction + consume verb ---
-        # "a third of the elves quit" → subtract(accumulator * 1/3)
-        # "places a quarter of the pieces" → subtract(accumulator * 1/4)
-        if mults and any(w in sent_lower for w in
-                         ["quit", "leave", "left", "place", "places", "placed",
-                          "remove", "removes", "removed",
-                          "eat", "ate", "eats", "use", "used", "uses",
-                          "gave", "give", "gives",
-                          "lost", "lose", "loses",
-                          "broke", "break", "breaks",
-                          "sold", "sell", "sells",
-                          "spent", "spend", "spends",
-                          "took", "take", "takes",
-                          "threw", "throw", "throws",
-                          "donated", "donate", "donates"]):
+        # --- Pattern: fraction + consume verb (from graph L09) ---
+        if mults and _has_verb_for_op(sent_lower, "subtract"):
             fraction = mults[0].value
             consumed = BinOp("multiply", accumulator, Lit(fraction))
             accumulator = BinOp("subtract", accumulator, consumed)
             continue
 
         # --- Pattern: fraction + "of the remaining/rest" ---
-        # "a third of the remaining pieces" → subtract from what's left
-        if mults and any(w in sent_lower for w in ["remaining", "rest", "left"]):
+        if mults and any(w in sent_lower
+                         for w in _aggregation_cues("remaining")):
             fraction = mults[0].value
             consumed = BinOp("multiply", accumulator, Lit(fraction))
             accumulator = BinOp("subtract", accumulator, consumed)
             continue
 
         # --- Pattern: "sells remainder for $X per Y" → multiply ---
-        if re.search(r'sell|sold|earn|make|charge', sent_lower):
+        if re.search(r'\b(?:sell|sold|earn|make|charge)\b', sent_lower):
             money = [t for t in clause.tokens if t.type == "money"]
             if money:
                 accumulator = BinOp("multiply", accumulator,
@@ -2993,7 +2949,6 @@ def _try_sequential(clauses: list[Clause],
         # --- Pattern: explicit operation with number ---
         if op and nums:
             for n in nums:
-                # Don't re-use the initial value as an operand
                 if n.value == initial_val and clause == clauses[first_clause_idx]:
                     continue
                 accumulator = BinOp(op, accumulator, Lit(n.value, n.text))
@@ -3004,26 +2959,13 @@ def _try_sequential(clauses: list[Clause],
             accumulator = BinOp(op, accumulator, Lit(mults[0].value))
             continue
 
-        # --- Pattern: "hires/adds N more" ---
-        if nums and any(w in sent_lower for w in
-                        ["hire", "hires", "hired", "add", "adds", "added",
-                         "more", "additional", "extra", "another",
-                         "replace", "replaces", "replaced"]):
+        # --- Pattern: verb-driven operations (from graph L09) ---
+        if nums and _has_verb_for_op(sent_lower, "add"):
             for n in nums:
                 accumulator = BinOp("add", accumulator, Lit(n.value, n.text))
             continue
 
-        # --- Pattern: consume/remove/take N ---
-        # Catches verbs the language graph missed: "snuck", "stole", "lost"
-        if nums and any(w in sent_lower for w in
-                        ["snuck", "sneak", "sneaks",
-                         "stole", "steal", "steals",
-                         "lost", "lose", "loses",
-                         "dropped", "drop", "drops",
-                         "ruined", "ruin", "ruins",
-                         "damaged", "damage", "damages",
-                         "forgot", "forget", "forgets",
-                         "wasted", "waste", "wastes"]):
+        if nums and _has_verb_for_op(sent_lower, "subtract"):
             for n in nums:
                 accumulator = BinOp("subtract", accumulator, Lit(n.value, n.text))
             continue
