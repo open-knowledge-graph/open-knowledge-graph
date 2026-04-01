@@ -244,6 +244,15 @@ def _all_aggregation_cues():
 def _comparatives():
     return _lg().comparatives
 
+def _world_constants():
+    return _lg().world_constants
+
+def _unit_cooccurrence():
+    return _lg().unit_cooccurrence
+
+def _recipient_nouns():
+    return _lg().recipient_nouns
+
 def _has_verb_for_op(sentence: str, operation: str) -> bool:
     """Check if sentence contains any verb mapped to the given operation."""
     vi = _verb_index()
@@ -932,12 +941,12 @@ def _extract_clause_relations(text: str, entities: set[str],
         if entity and dep and entity != dep:
             results.append(Relation(entity, dep, "twice_plus", val))
 
-    # --- "N [words] more/older/taller/... than" ---
+    # --- "N [words] more/older/taller/... than" (from graph L13) ---
+    _inc_words = _comparatives().get("increase", {}).get("words", [])
+    _inc_pat = "|".join(re.escape(w) for w in _inc_words)
     if not results:  # don't double-match with twice_plus
         for m in re.finditer(
-                r'(\d[\d,]*\.?\d*)\s+\w*\s*'
-                r'(?:more|older|taller|heavier|larger|bigger|longer|higher|'
-                r'greater|farther)\s+than\b',
+                rf'(\d[\d,]*\.?\d*)\s+\w*\s*(?:{_inc_pat})\s+than\b',
                 text_l):
             val = float(m.group(1).replace(',', ''))
             entity = _entity_before(m.start())
@@ -945,11 +954,11 @@ def _extract_clause_relations(text: str, entities: set[str],
             if entity and dep and entity != dep:
                 results.append(Relation(entity, dep, "add", val))
 
-    # --- "N [words] younger/less/shorter/... than" ---
+    # --- "N [words] younger/less/shorter/... than" (from graph L13) ---
+    _dec_words = _comparatives().get("decrease", {}).get("words", [])
+    _dec_pat = "|".join(re.escape(w) for w in _dec_words)
     for m in re.finditer(
-            r'(\d[\d,]*\.?\d*)\s+\w*\s*'
-            r'(?:younger|less|shorter|lighter|smaller|fewer|lower|closer)'
-            r'\s+than\b',
+            rf'(\d[\d,]*\.?\d*)\s+\w*\s*(?:{_dec_pat})\s+than\b',
             text_l):
         val = float(m.group(1).replace(',', ''))
         entity = _entity_before(m.start())
@@ -1686,31 +1695,11 @@ def _get_implicit_numbers(text: str, existing: list) -> list:
             implicit.append((val, "cents", "", -1, -1))
             existing_vals.add(val)
 
-    # Time: week=7 days, year=12 months or 365 days
-    if re.search(r'\bweek\b', text) and 7 not in existing_vals:
-        implicit.append((7, "days", "", -1, -1))
-        existing_vals.add(7)
-    if re.search(r'\byear\b', text) and 12 not in existing_vals:
-        implicit.append((12, "months", "", -1, -1))
-        existing_vals.add(12)
-    if re.search(r'\byear\b', text) and 365 not in existing_vals:
-        implicit.append((365, "days", "", -1, -1))
-        existing_vals.add(365)
-
-    # Dozen
-    if re.search(r'\bdozen\b', text) and 12 not in existing_vals:
-        implicit.append((12, "", "", -1, -1))
-        existing_vals.add(12)
-
-    # Alphabet
-    if re.search(r'\balphabet\b', text) and 26 not in existing_vals:
-        implicit.append((26, "letters", "", -1, -1))
-        existing_vals.add(26)
-
-    # Score/points
-    if re.search(r'\bscore\b', text) and 20 not in existing_vals:
-        implicit.append((20, "", "", -1, -1))
-        existing_vals.add(20)
+    # World constants from language graph (L14)
+    for wc in _world_constants():
+        if re.search(rf'\b{wc["word"]}\b', text) and wc["value"] not in existing_vals:
+            implicit.append((wc["value"], wc.get("unit", ""), "", -1, -1))
+            existing_vals.add(wc["value"])
 
     # Ratios: "5:9" or "5 to 9" — extract the second number if not present
     for m in re.finditer(r'(\d+)\s*:\s*(\d+)', text):
@@ -1742,23 +1731,13 @@ def _get_implicit_numbers(text: str, existing: list) -> list:
         implicit.append((1, "", "", -1, -1))
         existing_vals.add(1)
 
-    # Unit conversions: feet→inches, hours→minutes, etc.
-    if re.search(r'\bfeet\b|\bfoot\b', text) and re.search(r'\binch', text):
-        if 12 not in existing_vals:
-            implicit.append((12, "inches", "", -1, -1))
-            existing_vals.add(12)
-    if re.search(r'\bhour', text) and re.search(r'\bminute', text):
-        if 60 not in existing_vals:
-            implicit.append((60, "minutes", "", -1, -1))
-            existing_vals.add(60)
-    if re.search(r'\bday', text) and re.search(r'\bhour', text):
-        if 24 not in existing_vals:
-            implicit.append((24, "hours", "", -1, -1))
-            existing_vals.add(24)
-    if re.search(r'\bmonth', text) and re.search(r'\bday', text):
-        if 30 not in existing_vals:
-            implicit.append((30, "days", "", -1, -1))
-            existing_vals.add(30)
+    # Unit cooccurrence rules from language graph (L15)
+    for rule in _unit_cooccurrence():
+        has_a = any(re.search(rf'\b{u}\b', text) for u in rule["unit_a"])
+        has_b = any(re.search(rf'\b{u}\b', text) for u in rule["unit_b"])
+        if has_a and has_b and rule["value"] not in existing_vals:
+            implicit.append((rule["value"], rule["result_unit"], "", -1, -1))
+            existing_vals.add(rule["value"])
 
     # For fractions extracted as decimals, inject the denominator
     # "a third" → 0.333, also inject 3
@@ -2117,7 +2096,7 @@ def _try_entity_props(clauses: list[Clause], target: dict,
     multiplier = None
 
     # Guard: don't look for multipliers if question asks for a difference
-    is_difference_q = re.search(r'\b(?:difference|more than|less than|faster|slower)\b', q_lower)
+    is_difference_q = any(w in q_lower for w in _aggregation_cues("difference"))
 
     # Check question for a number (e.g., "how many for 2 months?")
     if not is_difference_q:
@@ -2135,11 +2114,10 @@ def _try_entity_props(clauses: list[Clause], target: dict,
     # Check first non-question clause for a count of recipients
     if multiplier is None and not is_difference_q:
         for nums, sent_l in clause_nums:
-            if len(nums) == 1 and re.search(
-                    r'\b(?:for\s+(?:her|his|their)\s+\d|'
-                    r'\d\s+(?:grandchild|child|student|friend|'
-                    r'people|person|team|group|class))',
-                    sent_l):
+            _rn = _recipient_nouns()
+            has_recipient = any(w in sent_l for w in _rn) or \
+                re.search(r'\bfor\s+(?:her|his|their)\s+\d', sent_l)
+            if len(nums) == 1 and has_recipient:
                 multiplier = nums[0].value
                 break
 
@@ -2192,10 +2170,11 @@ def _try_percentage(clauses: list[Clause], target: dict,
                 direction = "more"
             elif verb_result and verb_result.operation == "subtract":
                 direction = "consumed"
-            elif re.search(r'\b(?:cheaper|discount|off|lower|save)\b', sent_lower):
-                # These are comparative adjectives, not verbs — language gap
+            elif any(w in sent_lower
+                     for w in _comparatives().get("decrease", {}).get("words", [])):
                 direction = "less"
-            elif re.search(r'\b(?:more|additional|extra|higher|tax|markup)\b', sent_lower):
+            elif any(w in sent_lower
+                     for w in _comparatives().get("increase", {}).get("words", [])):
                 direction = "more"
             else:
                 direction = "of"

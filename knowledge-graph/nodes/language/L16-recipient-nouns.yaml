@@ -1,0 +1,47 @@
+id: L16-recipient-nouns
+type: knowledge
+domain: language
+name: "Recipient nouns — words that identify recipients in distribution patterns"
+description: >
+  Nouns that identify "recipients" in sum-then-multiply patterns.
+  "for her 3 children" → 3 is a multiplier, "children" is the clue.
+
+provenance:
+  attribution:
+    source: "GSM8K distribution pattern analysis"
+    date: "2026-04-01"
+  evidence:
+    type: empirical
+    description: "Recipient patterns from word problem corpus"
+
+recipient_nouns:
+  - grandchild
+  - grandchildren
+  - child
+  - children
+  - student
+  - students
+  - friend
+  - friends
+  - people
+  - person
+  - team
+  - teams
+  - group
+  - groups
+  - class
+  - classes
+  - sibling
+  - siblings
+  - member
+  - members
+  - guest
+  - guests
+  - family
+  - families
+  - neighbor
+  - neighbors
+  - worker
+  - workers
+  - employee
+  - employees

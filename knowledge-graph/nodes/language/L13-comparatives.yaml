@@ -47,6 +47,6 @@ comparatives:
       - closer
       - cheaper
       - discount
-      - off
+      - "off"
       - save
     operation: subtract

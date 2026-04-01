@@ -139,6 +139,29 @@ def compile_all():
             "operation": dir_data["operation"],
         }
 
+    # L14: World constants
+    data = load_yaml("L14-world-constants.yaml")
+    compiled["world_constants"] = []
+    for c in data["constants"]:
+        for v in c["values"]:
+            compiled["world_constants"].append({
+                "word": c["word"],
+                "value": v["value"],
+                "unit": v.get("unit", ""),
+            })
+
+    # L15: Unit cooccurrence rules
+    data = load_yaml("L15-unit-cooccurrence.yaml")
+    compiled["unit_cooccurrence"] = [
+        {"unit_a": r["unit_a"], "unit_b": r["unit_b"],
+         "value": r["value"], "result_unit": r["result_unit"]}
+        for r in data["cooccurrence_rules"]
+    ]
+
+    # L16: Recipient nouns
+    data = load_yaml("L16-recipient-nouns.yaml")
+    compiled["recipient_nouns"] = data["recipient_nouns"]
+
     # Write
     OUTPUT_DIR.mkdir(exist_ok=True)
     output_path = OUTPUT_DIR / "language.json"
@@ -161,6 +184,9 @@ def compile_all():
     print(f"  Semantic flds: {len(compiled['semantic_fields'])}")
     print(f"  Aggregation:   {len(compiled['aggregation_cues'])}")
     print(f"  Comparatives:  {len(compiled['comparatives'])}")
+    print(f"  World consts:  {len(compiled['world_constants'])}")
+    print(f"  Unit cooccur:  {len(compiled['unit_cooccurrence'])}")
+    print(f"  Recipient ns:  {len(compiled['recipient_nouns'])}")
 
 
 if __name__ == "__main__":

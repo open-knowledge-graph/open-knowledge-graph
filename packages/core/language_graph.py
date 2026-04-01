@@ -67,6 +67,9 @@ class LanguageGraph:
     semantic_fields: dict[str, dict]        # field_name → {words, values?}
     aggregation_cues: dict[str, list[str]]  # agg_type → [words]
     comparatives: dict[str, dict]           # direction → {words, operation}
+    world_constants: list[dict]             # [{word, value, unit}]
+    unit_cooccurrence: list[dict]           # [{unit_a, unit_b, value, result_unit}]
+    recipient_nouns: set[str]
 
 
 def load() -> LanguageGraph:
@@ -131,6 +134,9 @@ def load() -> LanguageGraph:
         semantic_fields=raw.get("semantic_fields", {}),
         aggregation_cues=raw.get("aggregation_cues", {}),
         comparatives=raw.get("comparatives", {}),
+        world_constants=raw.get("world_constants", []),
+        unit_cooccurrence=raw.get("unit_cooccurrence", []),
+        recipient_nouns=set(raw.get("recipient_nouns", [])),
     )
     return _GRAPH
 

@@ -718,10 +718,160 @@
         "closer",
         "cheaper",
         "discount",
-        false,
+        "off",
         "save"
       ],
       "operation": "subtract"
     }
-  }
+  },
+  "world_constants": [
+    {
+      "word": "week",
+      "value": 7,
+      "unit": "days"
+    },
+    {
+      "word": "year",
+      "value": 12,
+      "unit": "months"
+    },
+    {
+      "word": "year",
+      "value": 365,
+      "unit": "days"
+    },
+    {
+      "word": "dozen",
+      "value": 12,
+      "unit": ""
+    },
+    {
+      "word": "alphabet",
+      "value": 26,
+      "unit": "letters"
+    },
+    {
+      "word": "score",
+      "value": 20,
+      "unit": ""
+    }
+  ],
+  "unit_cooccurrence": [
+    {
+      "unit_a": [
+        "feet",
+        "foot"
+      ],
+      "unit_b": [
+        "inch",
+        "inches"
+      ],
+      "value": 12,
+      "result_unit": "inches"
+    },
+    {
+      "unit_a": [
+        "hour",
+        "hours"
+      ],
+      "unit_b": [
+        "minute",
+        "minutes"
+      ],
+      "value": 60,
+      "result_unit": "minutes"
+    },
+    {
+      "unit_a": [
+        "day",
+        "days"
+      ],
+      "unit_b": [
+        "hour",
+        "hours"
+      ],
+      "value": 24,
+      "result_unit": "hours"
+    },
+    {
+      "unit_a": [
+        "month",
+        "months"
+      ],
+      "unit_b": [
+        "day",
+        "days"
+      ],
+      "value": 30,
+      "result_unit": "days"
+    },
+    {
+      "unit_a": [
+        "yard",
+        "yards"
+      ],
+      "unit_b": [
+        "feet",
+        "foot"
+      ],
+      "value": 3,
+      "result_unit": "feet"
+    },
+    {
+      "unit_a": [
+        "mile",
+        "miles"
+      ],
+      "unit_b": [
+        "feet",
+        "foot"
+      ],
+      "value": 5280,
+      "result_unit": "feet"
+    },
+    {
+      "unit_a": [
+        "dollar",
+        "dollars"
+      ],
+      "unit_b": [
+        "cent",
+        "cents"
+      ],
+      "value": 100,
+      "result_unit": "cents"
+    }
+  ],
+  "recipient_nouns": [
+    "grandchild",
+    "grandchildren",
+    "child",
+    "children",
+    "student",
+    "students",
+    "friend",
+    "friends",
+    "people",
+    "person",
+    "team",
+    "teams",
+    "group",
+    "groups",
+    "class",
+    "classes",
+    "sibling",
+    "siblings",
+    "member",
+    "members",
+    "guest",
+    "guests",
+    "family",
+    "families",
+    "neighbor",
+    "neighbors",
+    "worker",
+    "workers",
+    "employee",
+    "employees"
+  ]
 }

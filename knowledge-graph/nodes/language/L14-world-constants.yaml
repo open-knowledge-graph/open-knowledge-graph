@@ -1,0 +1,40 @@
+id: L14-world-constants
+type: knowledge
+domain: language
+name: "World constants — implicit numeric values of common nouns"
+description: >
+  Words that carry an implicit numeric value in word problem context.
+  "week" implies 7 (days), "year" implies 365 (days) or 12 (months),
+  "alphabet" implies 26. These are world knowledge, not math.
+
+provenance:
+  attribution:
+    source: "Common world knowledge constants"
+    date: "2026-04-01"
+  evidence:
+    type: axiomatic
+    description: "Standard English world knowledge"
+
+constants:
+  - word: week
+    values:
+      - value: 7
+        unit: days
+  - word: year
+    values:
+      - value: 12
+        unit: months
+      - value: 365
+        unit: days
+  - word: dozen
+    values:
+      - value: 12
+        unit: ""
+  - word: alphabet
+    values:
+      - value: 26
+        unit: letters
+  - word: score
+    values:
+      - value: 20
+        unit: ""
