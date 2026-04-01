@@ -1979,10 +1979,8 @@ def _compute_accumulator(clauses: list[Clause], skip_idx: int,
                                         Lit(n.value, n.text))
             continue
 
-        # --- Pattern: divide verbs with numbers ---
-        if nums and any(re.search(rf'\b{w}\b', sent_lower) for w in
-                        ["divide", "divided", "split", "share", "shared",
-                         "distribute", "average"]):
+        # --- Pattern: divide verbs with numbers (from graph L09) ---
+        if nums and _has_verb_for_op(sent_lower, "divide"):
             for n in nums:
                 accumulator = BinOp("divide", accumulator,
                                     Lit(n.value, n.text))
@@ -2806,14 +2804,7 @@ def _try_rate_groups(clauses: list[Clause],
             if is_division_target:
                 accumulator = BinOp("divide", accumulator,
                                     Lit(n.value, n.text))
-            elif any(w in sent_lower for w in
-                     ["keep", "keeps", "kept", "subtract", "minus",
-                      "lose", "lost", "spend", "spent",
-                      "remove", "take", "took"]):
-                accumulator = BinOp("subtract", accumulator,
-                                    Lit(n.value, n.text))
-            elif any(w in sent_lower for w in
-                     ["give", "gave", "gives"]):
+            elif _has_verb_for_op(sent_lower, "subtract"):
                 accumulator = BinOp("subtract", accumulator,
                                     Lit(n.value, n.text))
             elif clause.operation:
